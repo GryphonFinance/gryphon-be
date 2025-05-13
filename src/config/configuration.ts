@@ -28,6 +28,7 @@ export default () => ({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         bucket: process.env.AWS_BUCKET_NAME,
+        region: process.env.AWS_REGION,
     },
     logger: {
         level: process.env.LOG_LEVEL || 'info',

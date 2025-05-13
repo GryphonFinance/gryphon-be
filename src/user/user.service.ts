@@ -14,7 +14,8 @@ export class UserService {
   ) { }
 
   async createUser(defaultWallet?: string) {
-    return this.userModel.create({ defaultWallet });
+    const user = await this.userModel.create({ defaultWallet });
+    return user.toObject();
   }
 
   async addWallet(userId: string, address: string, isPrimary = false) {
@@ -25,17 +26,22 @@ export class UserService {
     return this.socialModel.create({ userId, platform, platformUserId, username, verifiedAt: new Date() });
   }
 
-  async getUserWithWallet(address: string) {
-    const user = await this.userModel.findOne({ defaultWallet: address }).exec();
-    if (user) {
-      return user;
-    }
-    const wallet = await this.walletModel.findOne({ address }).exec();
-    if (!wallet) return null;
-    return this.userModel.findById(wallet.userId).exec();
+  async getUserByWallet(address: string): Promise<User | null> {
+    const user = await this.userModel.findOne<User>({ defaultWallet: address }).exec();
+    if (!user) return null;
+    console.log(user);
+    return user;
   }
 
-  async getUserById(id: string) {
-    return this.userModel.findById(id).exec();
+  async getUserById(id: string): Promise<User | null> {
+    const user = await this.userModel.findById<User>(id).exec();
+    if (!user) return null;
+    return user;
+  }
+
+  async getWalletByUserId(id: string): Promise<Wallet | null> {
+    const wallet = await this.walletModel.findOne<Wallet>({ userId: id }).exec();
+    if (!wallet) return null;
+    return wallet;
   }
 }

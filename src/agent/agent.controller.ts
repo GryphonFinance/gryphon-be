@@ -5,10 +5,11 @@ import { Public } from 'src/auth/decorators/public.decorator';
 export class AgentController {
     constructor(private readonly agentService: AgentService) {}
 
-    @Post()
-    createAgent(@Body('agentData') agentData: any) {
-        return this.agentService.createAgent(agentData);
-    }
+    // TODO: Remove in production
+    // @Post()
+    // createAgent(@Body('agentData') agentData: any) {
+    //     return this.agentService.createAgent(agentData);
+    // }
 
     @Public()
     @Get('tokens')
@@ -34,10 +35,11 @@ export class AgentController {
         return this.agentService.getAgentByToken(token);
     }
 
-    @Put(':token')
-    updateAgent(@Param('token') token: string, @Body() body) {
-        return this.agentService.updateAgent(token, body);
-    }
+    // TODO: Remove in production
+    // @Put(':token')
+    // updateAgent(@Param('token') token: string, @Body() body) {
+    //     return this.agentService.updateAgent(token, body);
+    // }
 
     @Public()
     @Get(':id/ohlcv')

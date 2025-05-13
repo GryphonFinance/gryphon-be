@@ -23,6 +23,7 @@ export class BondingHandler {
             token: token,
             bondingPair: tokenInfo.bondingPair,
             agentToken: tokenInfo.agentToken,
+            lpPair: tokenInfo.agentToken,
             name: tokenInfo.stats.name,
             ticker: tokenInfo.stats.ticker,
             description: tokenInfo.description,
@@ -32,7 +33,8 @@ export class BondingHandler {
             youtube: tokenInfo.youtube,
             website: tokenInfo.website,
             trading: tokenInfo.trading,
-            tradingOnUniswap: tokenInfo.tradingOnUniswap
+            tradingOnUniswap: tokenInfo.tradingOnUniswap,
+            isGraduated: false
         }
         const preBondedAgent = {
             fName: tokenInfo.stats.fName,
@@ -45,7 +47,7 @@ export class BondingHandler {
             volume24H: tokenInfo.stats.volume24hInGryphon.toString()
         }
         const agentId = await this.agentService.createAgent({agent, preBondedAgent});
-        await this.erc20Listener.listenToToken(token); // TODO: Test this
+        await this.erc20Listener.listenToToken(token);
         this.logger.log(`Agent created with ID: ${agentId.agentId}`);
     }
 

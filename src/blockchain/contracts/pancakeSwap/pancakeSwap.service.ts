@@ -79,6 +79,8 @@ export class PancakeSwapService {
             redirect: "follow" as RequestRedirect
         };
 
+        console.log('requestOptions', requestOptions)
+
         const response = await fetch("https://graphql.bitquery.io", requestOptions);
         const data = await response.json();
 
@@ -115,21 +117,21 @@ export class PancakeSwapService {
         const agentTokenPriceInUsd = Number(poolData.price) * gryphonPriceInUsd;
         const marketCapInUsd = Number(1000000000) * agentTokenPriceInUsd;
         const liquidityInUsd = 2 * Number(ethers.formatEther(poolData.reserve1)) * gryphonPriceInUsd;
-        // const volume = await this.getVolume(poolData.token1, poolData.token0, gryphonPriceInUsd);
-        // const priceChange = await this.getPriceChange(poolData.token1, poolData.token0, gryphonPriceInUsd);
+        const volume = await this.getVolume(poolData.token1, poolData.token0, gryphonPriceInUsd);
+        const priceChange = await this.getPriceChange(poolData.token1, poolData.token0, gryphonPriceInUsd);
 
         return {
             priceInUsd: agentTokenPriceInUsd,
             marketCapInUsd,
             liquidityInUsd,
-            // volume1H: volume.volume1H,
-            // volume24H: volume.volume24H,
-            // volume7D: volume.volume7D,
-            // priceChange24H: priceChange ? priceChange.percentageChange24H : 0,
-            volume1H: 0,
-            volume24H: 0,
-            volume7D: 0,
-            priceChange24H: 0
+            volume1H: volume.volume1H,
+            volume24H: volume.volume24H,
+            volume7D: volume.volume7D,
+            priceChange24H: priceChange ? priceChange.percentageChange24H : 0,
+            // volume1H: 0,
+            // volume24H: 0,
+            // volume7D: 0,
+            // priceChange24H: 0
         }
     }
 

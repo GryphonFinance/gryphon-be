@@ -1,6 +1,12 @@
 import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { User } from './schemas/user.schema';
+import { Wallet } from './schemas/wallet.schema';
+import { Document, Types } from 'mongoose';
+
+// type UserDocument = User & Document & {
+//   _id: Types.ObjectId;
+// };
 
 @Controller('users')
 export class UserController {
@@ -30,9 +36,25 @@ export class UserController {
     return this.userService.addSocial(userId, platform, platformUserId, username);
   }
 
-  // @UseGuards(JwtAuthGuard)
   @Get('wallet/:address')
-  getUserByWallet(@Param('address') address: string) {
-    return this.userService.getUserWithWallet(address);
+  async getUserByWallet(@Param('address') address: string) {
+    const user = await this.userService.getUserByWallet(address) as User;
+    if (!user) return null;
+    const wallet = await this.userService.getWalletByUserId(user._id.toString()) as Wallet;
+    return {
+      ...user.toObject(),
+      wallet,
+    };
+  }
+
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    const user = await this.userService.getUserById(id) as User;
+    if (!user) return null;
+    const wallet = await this.userService.getWalletByUserId(user._id.toString()) as Wallet;
+    return {
+      ...user.toObject(),
+      wallet,
+    };
   }
 }

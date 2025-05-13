@@ -4,12 +4,7 @@ import { WalletLoginDto } from './dto/wallet-login.dto';
 import { UserService } from '../user/user.service';
 import { verifySignature } from './utils/signature.utils';
 import { ConfigService } from '@nestjs/config';
-import { Document, Types } from 'mongoose';
-
-type UserDocument = Document & {
-  _id: Types.ObjectId;
-  nonce?: number;
-};
+import { User } from '../user/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +15,7 @@ export class AuthService {
   ) {}
 
   async loginWithWallet(dto: WalletLoginDto): Promise<{ token: string, userId: string }> {
-    const user = await this.userService.getUserWithWallet(dto.address) as UserDocument;
+    const user = await this.userService.getUserByWallet(dto.address);
     if (!user) throw new UnauthorizedException('User not found');
 
     const message = `${this.configService.get<string>('auth.signatureMessage')}${user.nonce}`;
@@ -36,8 +31,8 @@ export class AuthService {
   }
 
   async getNonce(address: string): Promise<string> {
-    let user = await this.userService.getUserWithWallet(address);
-
+    let user = await this.userService.getUserByWallet(address) as User;
+    console.log(user);
     if (!user) {
       user = await this.userService.createUser(address);
     }

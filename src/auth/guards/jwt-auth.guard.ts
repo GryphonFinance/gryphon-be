@@ -26,7 +26,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   handleRequest(err: any, user: any, info: any) {
-    this.logger.debug(`Request user: ${user.defaultWallet}`);
     if (err || !user) {
       throw err || new Error('No user found');
     }

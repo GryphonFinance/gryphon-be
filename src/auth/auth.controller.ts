@@ -15,8 +15,8 @@ export class AuthController {
     const { token, userId } = await this.authService.loginWithWallet(dto);
 
     res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false,
+      secure: false,
       sameSite: 'none', // strict
       maxAge: 86400000,
     });

@@ -3,6 +3,8 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class User extends Document {
+  declare _id: Types.ObjectId;
+  
   @Prop({ required: true, unique: true })
   defaultWallet?: string;
 

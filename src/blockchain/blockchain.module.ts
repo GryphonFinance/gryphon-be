@@ -11,7 +11,7 @@ import { BondingHandler } from './contracts/bonding/bonding.handler';
 import { AgentModule } from '../agent/agent.module';
 import { FRouterService } from './contracts/fRouter/fRouter.service';
 import { PancakeSwapService } from './contracts/pancakeSwap/pancakeSwap.service';
-
+import { FPairService } from './contracts/fPair/fPair.service';
 @Module({
   imports: [
     ConfigModule,
@@ -28,7 +28,8 @@ import { PancakeSwapService } from './contracts/pancakeSwap/pancakeSwap.service'
     BondingHandler,
     FRouterService,
     PancakeSwapService,
+    FPairService
   ],
-  exports: [BlockchainService, BondingService, Erc20Listener, PancakeSwapService],
+  exports: [BlockchainService, BondingService, Erc20Listener, PancakeSwapService, FPairService],
 })
 export class BlockchainModule {}

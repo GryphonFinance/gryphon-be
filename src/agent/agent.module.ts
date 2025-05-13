@@ -9,6 +9,9 @@ import { CoingeckoModule } from 'src/coingecko/coingecko.module';
 import { Transaction, TransactionSchema } from './schemas/transactions.schema';
 import { Graph, GraphSchema } from './schemas/graph.schema';
 import { PancakeSwapService } from 'src/blockchain/contracts/pancakeSwap/pancakeSwap.service';
+import { FPairService } from 'src/blockchain/contracts/fPair/fPair.service';
+import { BondingService } from 'src/blockchain/contracts/bonding/bonding.service';
+
 @Module({
     imports: [
         MongooseModule.forFeature([
@@ -21,7 +24,7 @@ import { PancakeSwapService } from 'src/blockchain/contracts/pancakeSwap/pancake
         CoingeckoModule,
     ],
     controllers: [AgentController],
-    providers: [AgentService, PancakeSwapService],
+    providers: [AgentService, PancakeSwapService, FPairService, BondingService],
     exports: [AgentService],
 })
 export class AgentModule {}

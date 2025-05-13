@@ -53,7 +53,7 @@ export class Erc20Handler {
     const bondingPair = (await this.agentService.getAgentByToken(tokenAddress))?.bondingPair;
     const currentPrice = (1 / Number(preBondedAgent.price));
     const type = from === bondingPair ? 'buy' : 'sell';
-    const volumeInGryphon = (0.99*Number(value)/Number(preBondedAgent.price)).toString();
+    const volumeInGryphon = (0.99*Number(value) * currentPrice).toString();
     let graph = await this.agentService.getGraphByTime(tokenAddress, (new Date()).toUTCString());
     if (!graph.length) {
       const graphData = {

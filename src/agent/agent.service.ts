@@ -9,6 +9,8 @@ import { Stats } from './schemas/stats.schema';
 import { Transaction } from './schemas/transactions.schema';
 import { Graph } from './schemas/graph.schema';
 import { PancakeSwapService } from 'src/blockchain/contracts/pancakeSwap/pancakeSwap.service';
+import { FPairService } from 'src/blockchain/contracts/fPair/fPair.service';
+import { BondingService } from 'src/blockchain/contracts/bonding/bonding.service';
 
 @Injectable()
 export class AgentService {
@@ -21,7 +23,9 @@ export class AgentService {
         @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
         @InjectModel(Graph.name) private graphModel: Model<Graph>,
         private readonly coingeckoService: CoingeckoService,
-        private readonly pancakeSwapService: PancakeSwapService
+        private readonly pancakeSwapService: PancakeSwapService,
+        private readonly fPairService: FPairService,
+        private readonly bondingService: BondingService
     ) { }
 
     async createAgent(agentData: any) {
@@ -231,20 +235,56 @@ export class AgentService {
         const priceInUsd = (1 / Number(preBondedAgent.price)) * Number(gryphonPriceInUsd);
         const marketCapInUsd = Number(ethers.formatEther(preBondedAgent.marketCap)) * Number(gryphonPriceInUsd);
         const liquidityInUsd = Number(ethers.formatEther(preBondedAgent.liquidity)) * Number(gryphonPriceInUsd);
-        const volume1H = Number(1) * Number(gryphonPriceInUsd);
-        const volume24H = Number(ethers.formatEther(preBondedAgent.volume24H)) * Number(gryphonPriceInUsd);
-        const volume7D = Number(7) * Number(gryphonPriceInUsd);
-        const graduationPercentage = Number(0.15)
-        const graduationThresholdInUsd = 100
-        const priceChange24H = 0.1
+        
+        // Calculate volume for 1 hour, 24 hours, and 7 days
+        const txn1H = await this.transactionModel.find({
+            agent: preBondedAgent.agent, 
+            timestamp: { $gte: new Date(Date.now() - 1 * 60 * 60 * 1000) } 
+        }).exec();
+        const volume1HInWei = txn1H.reduce((sum, doc) => sum + (Number(doc.amount) || 0), 0);
+        const volume1HInUsd = Number(ethers.formatEther(volume1HInWei)) * Number(priceInUsd);
+
+        const txn24H = await this.transactionModel.find({
+            agent: preBondedAgent.agent, 
+            timestamp: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } 
+        }).exec();
+        const volume24HInWei = txn24H.reduce((sum, doc) => sum + (Number(doc.amount) || 0), 0);
+        const volume24HInUsd = Number(ethers.formatEther(volume24HInWei)) * Number(priceInUsd);
+        
+        const txn7D = await this.transactionModel.find({
+            agent: preBondedAgent.agent, 
+            timestamp: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } 
+        }).exec();
+        const volume7DInWei = txn7D.reduce((sum, doc) => sum + (Number(doc.amount) || 0), 0);
+        const volume7DInUsd = Number(ethers.formatEther(volume7DInWei)) * Number(priceInUsd);
+        
+        // Calculate graduation percentage
+        const fPairAddress = preBondedAgent.bondingPair;
+        const tokenBalance = await this.fPairService.getTokenBalance(fPairAddress);
+        const tokenBalanceInUsd = Number(ethers.formatEther(tokenBalance)) * Number(priceInUsd);
+        const tokensSold = Number(preBondedAgent.supply) - Number(tokenBalance);
+        const tokensSoldInUsd = Number(ethers.formatEther(tokensSold)) * Number(priceInUsd);
+        const graduationThreshold = await this.bondingService.getGradThreshold();
+        const graduationPercentage = tokensSold / ( Number(preBondedAgent.supply) - Number(graduationThreshold) );
+        const graduationThresholdInUsd = Number(ethers.formatEther(Number(preBondedAgent.supply) - Number(graduationThreshold))) * Number(priceInUsd);
+
+        // Calculate price change for 24 hours
+        let priceChange24H = 0;
+        const priceBefore24H = await this.graphModel.findOne({ agent: preBondedAgent.agent, startTimestamp: { $lte: new Date(Date.now() - 24 * 60 * 60 * 1000) } });
+        if (!priceBefore24H) {
+            priceChange24H = 0;
+        } else {
+            priceChange24H = (Number(priceInUsd) - Number(priceBefore24H?.close)) / Number(priceBefore24H?.close);
+        }
 
         const stats = {
             priceInUsd: priceInUsd.toString(),
             marketCapInUsd: marketCapInUsd.toString(),
             liquidityInUsd: liquidityInUsd.toString(),
-            volume1H: volume1H.toString(),
-            volume24H: volume24H.toString(),
-            volume7D: volume7D.toString(),
+            volume1H: volume1HInUsd.toString(),
+            volume24H: volume24HInUsd.toString(),
+            volume7D: volume7DInUsd.toString(),
+            tokensSoldInUsd: tokensSoldInUsd.toString(),
             graduationPercentage: graduationPercentage.toString(),
             graduationThresholdInUsd: graduationThresholdInUsd.toString(),
             priceChange24H: priceChange24H.toString()
@@ -254,6 +294,7 @@ export class AgentService {
     }
 
     async getGraph(id: string, granularity: string, startTime: number, endTime: number) {
+        const gryphonPrice = await this.coingeckoService.getGryphonPrice();
         const agent = await this.agentModel.findById(id);
         if (!agent) {
             throw new NotFoundException(`Agent with ID ${id} not found`);
@@ -275,11 +316,11 @@ export class AgentService {
     
                 returnData.push({ 
                     ...graph[i].toObject(),
-                    openPrice: graph[i].open,
-                    highestPrice: graph[i].high,
-                    lowestPrice: graph[i].low,
-                    closePrice: graph[i].close,
-                    tradingVolume: graph[i].volume,
+                    openPrice: Number(graph[i].open) * Number(gryphonPrice.gryphonPriceInUsd),
+                    highestPrice: Number(graph[i].high) * Number(gryphonPrice.gryphonPriceInUsd),
+                    lowestPrice: Number(graph[i].low) * Number(gryphonPrice.gryphonPriceInUsd),
+                    closePrice: Number(graph[i].close) * Number(gryphonPrice.gryphonPriceInUsd),
+                    tradingVolume: Number(graph[i].volume) * Number(gryphonPrice.gryphonPriceInUsd),
                     startTimeMilliseconds: startTime,
                     endTimeMilliseconds: endTime,
                     granularity: granularity,
@@ -289,7 +330,6 @@ export class AgentService {
             // Sort the data in ascending order based on startTimeMilliseconds
             return returnData.sort((a, b) => a.startTimeMilliseconds - b.startTimeMilliseconds);
         }
-        const gryphonPrice = await this.coingeckoService.getGryphonPrice();
         const ohlcv = await this.pancakeSwapService.getTokenOHLCV(agent.agentToken, granularity, startTime, endTime, gryphonPrice.gryphonPriceInUsd);
         return ohlcv;
     }

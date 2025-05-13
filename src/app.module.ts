@@ -9,6 +9,7 @@ import { CoingeckoModule } from './coingecko/coingecko.module';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { AgentModule } from './agent/agent.module';
+import { S3Module } from './s3/s3.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { AgentModule } from './agent/agent.module';
     CoingeckoModule,
     DatabaseModule,
     AuthModule,
-    AgentModule
+    AgentModule,
+    S3Module,
   ],
   controllers: [AppController],
   providers: [AppService],
