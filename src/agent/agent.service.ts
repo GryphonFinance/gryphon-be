@@ -225,6 +225,7 @@ export class AgentService {
                 volume1H: '0',
                 volume24H: '0',
                 volume7D: '0',
+                tokensSoldInUsd: '0',
                 graduationPercentage: '0',
                 graduationThresholdInUsd: '0',
                 priceChange24H: '0'

@@ -18,6 +18,8 @@ export class Stats extends Document{
     @Prop()
     volume7D: string;
     @Prop()
+    tokensSoldInUsd: string;
+    @Prop()
     graduationPercentage: string;   
     @Prop()
     graduationThresholdInUsd: string;
